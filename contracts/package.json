@@ -1,0 +1,13 @@
+{
+  "name": "traceid-contracts",
+  "version": "0.1.0",
+  "description": "Smart contracts for traceid face provenance verification",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
+  }
+}

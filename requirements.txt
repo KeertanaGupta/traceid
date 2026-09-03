@@ -1,0 +1,12 @@
+typer
+rich
+python-dotenv
+insightface
+opencv-python
+onnxruntime
+numpy
+google-cloud-vision
+requests
+beautifulsoup4
+web3
+pillow
