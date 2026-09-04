@@ -5,7 +5,7 @@ insightface
 opencv-python
 onnxruntime
 numpy
-google-cloud-vision
+google-search-results
 requests
 beautifulsoup4
 web3
