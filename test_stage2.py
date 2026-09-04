@@ -4,10 +4,22 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+# Force UTF-8 output encoding for Windows terminal
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+
 from traceid.config import SERPAPI_KEY
 from traceid.discovery import fetch_candidate_image, search_web_for_face
 
 console = Console()
+
+
+def _clean_str(text: str) -> str:
+    """Sanitize string for terminal display."""
+    if not text:
+        return ""
+    # Encode to UTF-8 and ignore unencodable chars if fallback needed
+    return text.encode("utf-8", "ignore").decode("utf-8", "ignore")
 
 
 def run_stage2_test(image_path: str):
@@ -30,7 +42,7 @@ def run_stage2_test(image_path: str):
         sys.exit(1)
 
     console.print(f"[bold yellow]Running Google Lens web search for:[bold yellow] [white]{path.name}[/white]")
-    
+
     try:
         candidates = search_web_for_face(str(path))
     except Exception as e:
@@ -57,7 +69,8 @@ def run_stage2_test(image_path: str):
         page_url = cand["page_url"]
         image_url = cand["image_url"]
         platform = cand["platform"]
-        title = cand["title"] or "N/A"
+        raw_title = cand["title"] or "N/A"
+        title = _clean_str(raw_title)
 
         # Attempt to fetch candidate image
         local_path = fetch_candidate_image(page_url, image_url)
