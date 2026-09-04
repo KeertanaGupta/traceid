@@ -13,8 +13,9 @@ POLYGON_AMOY_RPC_URL: str | None = os.getenv("POLYGON_AMOY_RPC_URL")
 DEPLOYER_PRIVATE_KEY: str | None = os.getenv("DEPLOYER_PRIVATE_KEY")
 CONTRACT_ADDRESS: str | None = os.getenv("CONTRACT_ADDRESS")
 
-_threshold_raw = os.getenv("FACE_MATCH_THRESHOLD", "0.90")
+_threshold_raw = os.getenv("FACE_MATCH_THRESHOLD", "0.40")
 try:
     FACE_MATCH_THRESHOLD: float = float(_threshold_raw)
 except ValueError:
-    FACE_MATCH_THRESHOLD: float = 0.90
+    FACE_MATCH_THRESHOLD: float = 0.40
+

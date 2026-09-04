@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from traceid.config import FACE_MATCH_THRESHOLD
 from traceid.face import load_and_detect, get_embedding, cosine_similarity
 
 console = Console()
@@ -13,7 +14,8 @@ console = Console()
 def run_stage1_test(image_paths: list[str]):
     console.print(
         Panel(
-            "[bold cyan]Stage 1: Face Detection, Quality Check & Embedding Verification[/bold cyan]",
+            f"[bold cyan]Stage 1: Face Detection, Quality Check & Embedding Verification[/bold cyan]\n"
+            f"[dim]Configured FACE_MATCH_THRESHOLD = {FACE_MATCH_THRESHOLD:.2f}[/dim]",
             expand=False,
         )
     )
@@ -89,25 +91,28 @@ def run_stage1_test(image_paths: list[str]):
 
     # Pairwise Cosine Similarity Table if 2 or more embeddings obtained
     if len(embeddings) >= 2:
-        sim_table = Table(title="[bold magenta]Pairwise Cosine Similarity[/bold magenta]", show_header=True)
+        sim_table = Table(
+            title=f"[bold magenta]Pairwise Cosine Similarity (Threshold = {FACE_MATCH_THRESHOLD:.2f})[/bold magenta]",
+            show_header=True,
+        )
         sim_table.add_column("Image A", style="cyan")
         sim_table.add_column("Image B", style="cyan")
         sim_table.add_column("Cosine Similarity", style="bold yellow")
-        sim_table.add_column("Interpretation", style="bold")
+        sim_table.add_column("Match Status", style="bold")
 
         img_names = list(embeddings.keys())
         for i in range(len(img_names)):
             for j in range(i + 1, len(img_names)):
                 name1, name2 = img_names[i], img_names[j]
                 sim = cosine_similarity(embeddings[name1], embeddings[name2])
-                interp = (
-                    "[bold green]High Match[/bold green]"
-                    if sim >= 0.5
-                    else "[yellow]Low / No Match[/yellow]"
-                )
+                if sim >= FACE_MATCH_THRESHOLD:
+                    interp = f"[bold green]MATCH (>= {FACE_MATCH_THRESHOLD:.2f})[/bold green]"
+                else:
+                    interp = f"[bold red]NO MATCH (< {FACE_MATCH_THRESHOLD:.2f})[/bold red]"
                 sim_table.add_row(name1, name2, f"{sim:.4f}", interp)
 
         console.print(sim_table)
+
 
 
 if __name__ == "__main__":
