@@ -86,23 +86,25 @@ def classify_platform(url: str) -> str:
 
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc.lower()
+    if ":" in domain:
+        domain = domain.split(":")[0]
 
-    if any(d in domain for d in ["instagram.com", "instagr.am"]):
-        return "instagram"
-    elif any(d in domain for d in ["x.com", "twitter.com", "t.co"]):
-        return "x"
-    elif "linkedin.com" in domain:
-        return "linkedin"
-    elif any(d in domain for d in ["facebook.com", "fb.com", "fb.watch"]):
-        return "facebook"
-    elif any(d in domain for d in ["pinterest.com", "pin.it"]):
+    if "pinterest." in domain or "pin.it" in domain:
         return "pinterest"
-    elif "reddit.com" in domain:
+    elif "instagram." in domain or "instagr.am" in domain:
+        return "instagram"
+    elif "linkedin." in domain:
+        return "linkedin"
+    elif "facebook." in domain or "fb.com" in domain or "fb.watch" in domain:
+        return "facebook"
+    elif "reddit." in domain:
         return "reddit"
-    elif "tiktok.com" in domain:
+    elif "tiktok." in domain:
         return "tiktok"
-    elif any(d in domain for d in ["youtube.com", "youtu.be"]):
+    elif "youtube." in domain or "youtu.be" in domain:
         return "youtube"
+    elif domain == "x.com" or domain.endswith(".x.com") or "twitter." in domain or domain == "t.co" or domain.endswith(".t.co"):
+        return "x"
     else:
         return "web"
 
