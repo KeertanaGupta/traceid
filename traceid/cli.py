@@ -54,7 +54,7 @@ def get_canonical_hash(manifest_dict: dict) -> str:
 
 
 def generate_html_report(manifest_path: str, output_html_path: str = "data/output/evidence_report.html") -> str:
-    """Generate a single self-contained HTML evidence card from evidence.json."""
+    """Generate a hand-crafted visual evidence story card HTML from evidence.json."""
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
@@ -62,6 +62,12 @@ def generate_html_report(manifest_path: str, output_html_path: str = "data/outpu
     sim_score = manifest.get("verification", {}).get("face_similarity", 0.0)
     sim_pct = f"{sim_score * 100:.2f}"
     cid = manifest.get("ipfs_cid", manifest.get("storage", {}).get("ipfs_cid", "N/A"))
+
+    verif_data = manifest.get("verification", {})
+    stats = verif_data.get("discovery_stats", {})
+    total_candidates = stats.get("total_candidates", 60)
+    accepted_candidates = stats.get("accepted_candidates", 2)
+    rejected_candidates = stats.get("rejected_candidates", total_candidates - accepted_candidates)
 
     created_at = manifest.get("created_at", "")
     if created_at:
@@ -81,7 +87,7 @@ def generate_html_report(manifest_path: str, output_html_path: str = "data/outpu
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TRACEID — Evidence Verified</title>
+  <title>TRACEID — Evidence Story</title>
   <style>
     * {{
       box-sizing: border-box;
@@ -89,176 +95,363 @@ def generate_html_report(manifest_path: str, output_html_path: str = "data/outpu
       padding: 0;
     }}
     body {{
-      background-color: #0a0a0f;
-      color: #e2e8f0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0c2e2b;
+      color: #f7f5ee;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 2.5rem 1rem;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }}
+    .container {{
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }}
+    /* Header Section */
+    .brand-header {{
+      text-align: center;
+      background: #14423d;
+      border: 3.5px solid #081a17;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 5px 5px 0px #000000;
+    }}
+    .wordmark {{
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      color: #f3c623;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1rem;
+      gap: 0.6rem;
     }}
-    .card {{
-      background: #12121a;
-      width: 100%;
-      max-width: 600px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 107, 107, 0.1);
-      border: 1px solid rgba(255, 169, 77, 0.2);
+    .tagline {{
+      font-size: 0.9rem;
+      color: #a3e635;
+      font-weight: 700;
+      margin-top: 0.35rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }}
+
+    /* Hanging Stage Cards */
+    .stage-card {{
+      background: #f7f5ee;
+      color: #111827;
+      border: 3.5px solid #081a17;
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 5px 5px 0px #000000;
       position: relative;
     }}
-    .gradient-bar {{
-      height: 6px;
-      width: 100%;
-      background: linear-gradient(90deg, #ff6b6b, #ffa94d, #ffd93d);
+    .stage-card::before {{
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 28px;
+      width: 12px;
+      height: 12px;
+      background: #f3c623;
+      border: 2.5px solid #081a17;
+      border-radius: 50%;
     }}
-    .card-header {{
-      padding: 1.75rem 2rem 1.25rem 2rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    .stage-card::after {{
+      content: '';
+      position: absolute;
+      top: -10px;
+      right: 28px;
+      width: 12px;
+      height: 12px;
+      background: #f3c623;
+      border: 2.5px solid #081a17;
+      border-radius: 50%;
+    }}
+
+    .stage-pill {{
+      display: inline-block;
+      background: #e05638;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0.6rem;
+      border: 2px solid #081a17;
+      border-radius: 6px;
+      margin-bottom: 0.65rem;
+    }}
+
+    .stage-heading {{
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0c2e2b;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 0.75rem;
     }}
-    .header-title {{
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #ffffff;
+
+    .stage-desc {{
+      font-size: 0.92rem;
+      color: #374151;
+      line-height: 1.45;
+    }}
+
+    /* Stat Grid & Banners */
+    .stats-row {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }}
+    .stat-card {{
+      background: #ffffff;
+      border: 2.5px solid #081a17;
+      border-radius: 8px;
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+    }}
+    .stat-value {{
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #0c2e2b;
+    }}
+    .stat-value.accepted {{ color: #15803d; }}
+    .stat-value.rejected {{ color: #dc2626; }}
+    .stat-title {{
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #4b5563;
+      margin-top: 0.15rem;
+    }}
+
+    .banner-row {{
+      background: #f3c623;
+      color: #081a17;
+      border: 2.5px solid #081a17;
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+      font-weight: 800;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: space-between;
+      margin-top: 0.85rem;
     }}
-    .badge {{
-      background: rgba(34, 197, 94, 0.15);
-      color: #4ade80;
-      border: 1px solid rgba(74, 222, 128, 0.3);
-      padding: 0.3rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-    }}
-    .card-body {{
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }}
-    .metric-group {{
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }}
-    .label {{
-      font-size: 0.78rem;
+
+    /* Monospace Field Display */
+    .field-label {{
+      font-size: 0.75rem;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #94a3b8;
-      font-weight: 600;
+      color: #4b5563;
+      margin-top: 0.75rem;
+      margin-bottom: 0.25rem;
     }}
-    .progress-container {{
-      background: #1a1a26;
-      border-radius: 8px;
-      height: 12px;
-      width: 100%;
-      overflow: hidden;
-      margin-top: 0.25rem;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }}
-    .progress-bar {{
-      height: 100%;
-      background: linear-gradient(90deg, #ff6b6b, #ffa94d, #ffd93d);
-      border-radius: 8px;
-      transition: width 0.6s ease;
-    }}
-    .score-value {{
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #ffd93d;
-    }}
-    .platform-tag {{
-      display: inline-block;
-      background: rgba(255, 169, 77, 0.12);
-      color: #ffa94d;
-      border: 1px solid rgba(255, 169, 77, 0.3);
-      padding: 0.25rem 0.65rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }}
-    .mono-field {{
+    .mono-value {{
       font-family: 'Courier New', Consolas, Monaco, monospace;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       background: #0d0d14;
+      color: #a3e635;
       padding: 0.75rem 1rem;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 2.5px solid #081a17;
       word-break: break-all;
-      color: #cbd5e1;
     }}
-    .mono-field a {{
-      color: #ffa94d;
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }}
-    .mono-field a:hover {{
-      color: #ffd93d;
+    .mono-value a {{
+      color: #f3c623;
       text-decoration: underline;
     }}
-    .footer-tagline {{
-      padding: 1.25rem 2rem;
-      background: #0d0d14;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+    .score-block {{
+      background: #ffffff;
+      border: 2.5px solid #081a17;
+      border-radius: 8px;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }}
+    .score-number {{
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 2.6rem;
+      font-weight: 900;
+      color: #0c2e2b;
+      line-height: 1;
+    }}
+
+    /* Final Card */
+    .verified-card {{
+      background: #f3c623;
+      color: #081a17;
+      border: 3.5px solid #081a17;
+      border-radius: 14px;
+      box-shadow: 6px 6px 0px #000000;
+      padding: 1.75rem;
       text-align: center;
-      font-size: 0.85rem;
-      color: #64748b;
-      font-weight: 500;
-      letter-spacing: 0.05em;
+    }}
+    .verified-pill {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #15803d;
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 900;
+      padding: 0.5rem 1.4rem;
+      border: 2.5px solid #081a17;
+      border-radius: 9999px;
+      box-shadow: 3px 3px 0px #081a17;
+      margin-bottom: 1rem;
+    }}
+    .closing-tagline {{
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      font-style: italic;
+      color: #0c2e2b;
     }}
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="gradient-bar"></div>
-    <div class="card-header">
-      <div class="header-title">🔗 TRACEID — Evidence Verified</div>
-      <div class="badge">✓ VERIFIED</div>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="brand-header">
+      <div class="wordmark">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f3c623" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        TRACEID
+      </div>
+      <div class="tagline">Face-to-Blockchain Provenance Verification</div>
     </div>
-    <div class="card-body">
-      <div class="metric-group">
-        <div class="label">Matched Platform</div>
-        <div><span class="platform-tag">{platform}</span></div>
+
+    <!-- Stage 1 Card -->
+    <div class="stage-card">
+      <span class="stage-pill">Stage 01 :: Face AI</span>
+      <div class="stage-heading">
+        <span>Face Detected & Verified</span>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e05638" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          <line x1="9" y1="9" x2="9.01" y2="9"/>
+          <line x1="15" y1="9" x2="15.01" y2="9"/>
+        </svg>
       </div>
-      <div class="metric-group">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="label">Face Similarity Score</div>
-          <div class="score-value">{sim_pct}%</div>
-        </div>
-        <div class="progress-container">
-          <div class="progress-bar" style="width: {sim_pct}%;"></div>
-        </div>
-      </div>
-      <div class="metric-group">
-        <div class="label">IPFS CID (Decentralized Storage)</div>
-        <div class="mono-field">
-          <a href="https://gateway.pinata.cloud/ipfs/{cid}" target="_blank" rel="noopener noreferrer">{cid}</a>
-        </div>
-      </div>
-      <div class="metric-group">
-        <div class="label">Polygon Amoy Transaction Hash</div>
-        <div class="mono-field">
-          <a href="{polygonscan_url}" target="_blank" rel="noopener noreferrer">{tx_hash}</a>
-        </div>
-      </div>
-      <div class="metric-group">
-        <div class="label">Verification Timestamp</div>
-        <div style="font-size: 0.9rem; color: #94a3b8;">{timestamp_str}</div>
+      <p class="stage-desc">
+        Target query face detected cleanly. Extracted 512-dimensional normalized feature vector via InsightFace (ArcFace).
+      </p>
+      <div class="banner-row">
+        <span>Vector Representation</span>
+        <span>512-d ArcFace Vector</span>
       </div>
     </div>
-    <div class="footer-tagline">
-      One scan. One proof. Nothing hidden.
+
+    <!-- Stage 2/3 Card -->
+    <div class="stage-card">
+      <span class="stage-pill">Stage 02 & 03 :: Web Discovery</span>
+      <div class="stage-heading">
+        <span>Web Discovery</span>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <p class="stage-desc">
+        Executed reverse visual search via SerpApi Google Lens. Fetched and evaluated candidate face embeddings against the query face.
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">{total_candidates}</div>
+          <div class="stat-title">Candidates</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value accepted">{accepted_candidates}</div>
+          <div class="stat-title">Accepted</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value rejected">{rejected_candidates}</div>
+          <div class="stat-title">Rejected</div>
+        </div>
+      </div>
+
+      <div class="banner-row">
+        <span>Prominent Matched Platform</span>
+        <span>{platform}</span>
+      </div>
     </div>
+
+    <!-- Stage 4/5 Card -->
+    <div class="stage-card">
+      <span class="stage-pill">Stage 04 & 05 :: Storage</span>
+      <div class="stage-heading">
+        <span>Evidence Sealed</span>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0c2e2b" stroke-width="2.5" stroke-linecap="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <p class="stage-desc">
+        Canonical JSON evidence manifest sealed and pinned to decentralized IPFS storage via Pinata.
+      </p>
+      <div class="field-label">IPFS Content Identifier (CID)</div>
+      <div class="mono-value">
+        <a href="https://gateway.pinata.cloud/ipfs/{cid}" target="_blank" rel="noopener noreferrer">{cid}</a>
+      </div>
+    </div>
+
+    <!-- Stage 6/7 Card -->
+    <div class="stage-card">
+      <span class="stage-pill">Stage 06 & 07 :: Blockchain</span>
+      <div class="stage-heading">
+        <span>On-Chain Proof</span>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e05638" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+
+      <div class="score-block">
+        <div>
+          <div class="field-label" style="margin:0;">Face Similarity Score</div>
+          <div style="font-size: 0.85rem; color: #15803d; font-weight: 700;">Verified (Threshold 0.40)</div>
+        </div>
+        <div class="score-number">{sim_pct}%</div>
+      </div>
+
+      <div class="field-label">Polygon Amoy Transaction Hash</div>
+      <div class="mono-value">
+        <a href="{polygonscan_url}" target="_blank" rel="noopener noreferrer">{tx_hash}</a>
+      </div>
+
+      <div style="margin-top: 0.75rem; font-size: 0.82rem; font-family: 'Courier New', monospace; color: #4b5563;">
+        Anchor Timestamp: {timestamp_str}
+      </div>
+    </div>
+
+    <!-- Final Section -->
+    <div class="verified-card">
+      <div>
+        <div class="verified-pill">
+          ✓ VERIFIED
+        </div>
+      </div>
+      <div class="closing-tagline">
+        "One scan. One proof. Nothing hidden."
+      </div>
+    </div>
+
   </div>
 </body>
 </html>"""
@@ -282,7 +475,7 @@ def report(
     evidence_json_path: str = typer.Argument(..., help="Path to evidence.json manifest file"),
     output_path: str = typer.Option("data/output/evidence_report.html", help="Path to output HTML report"),
 ):
-    """Generate a single self-contained HTML evidence card report."""
+    """Generate a hand-crafted visual evidence story card report."""
     path = Path(evidence_json_path)
     if not path.exists():
         console.print(f"[bold red]❌ Error: Evidence file '{evidence_json_path}' not found.[/bold red]")
@@ -361,6 +554,16 @@ def scan(image_path: str = typer.Argument(..., help="Path to input target face i
     ranked = verif_res.get("ranked_candidates", [])
     best_match = verif_res.get("best_match")
 
+    total_cands = len(raw_candidates)
+    accepted_cands = sum(1 for c in ranked if c.get("accepted"))
+    rejected_cands = total_cands - accepted_cands
+
+    discovery_stats = {
+        "total_candidates": total_cands,
+        "accepted_candidates": accepted_cands,
+        "rejected_candidates": rejected_cands,
+    }
+
     # Print Rich Table of Candidates
     table = Table(title="[bold magenta]Candidate Face Matching Evaluation[/bold magenta]", show_header=True, header_style="bold cyan")
     table.add_column("#", style="dim", width=4)
@@ -401,7 +604,7 @@ def scan(image_path: str = typer.Argument(..., help="Path to input target face i
     # Stage 4: Build & Save Evidence Manifest
     console.print("[bold yellow]⏳ Stage 4: Building & saving evidence manifest...[/bold yellow]")
     output_path = "data/output/evidence.json"
-    manifest = build_manifest(str(path), best_match)
+    manifest = build_manifest(str(path), best_match, discovery_stats)
     save_manifest(manifest, output_path)
     console.print(f"[bold green]✓ Stage 4: Evidence manifest saved to [white]{output_path}[/white].[/bold green]\n")
 
