@@ -108,7 +108,7 @@ traceid verify <evidence_json_path> --tamper
 
 - **Network**: Polygon Amoy Testnet (Chain ID `80002`)
 - **Contract Address**: [`0xAaeC9ACCa00fdf1d9d01902BBCDECd1Ab06F4517`](https://amoy.polygonscan.com/address/0xAaeC9ACCa00fdf1d9d01902BBCDECd1Ab06F4517)
-- **Example Transaction**: [`0x59b1b36ec2a48bb40cab223d43de1aaee9fd2fe2388e07b7c4bee626c6d6d115`](https://amoy.polygonscan.com/tx/0x59b1b36ec2a48bb40cab223d43de1aaee9fd2fe2388e07b7c4bee626c6d6d115)
+- **Example Transaction**: [`0xbedcb20931e557b3d6a34bc542fc43fa66ccdc2ed00142413888520d81c7a4af`](https://amoy.polygonscan.com/tx/0xbedcb20931e557b3d6a34bc542fc43fa66ccdc2ed00142413888520d81c7a4af)
 
 ## Ethics & Scope
 

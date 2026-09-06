@@ -116,7 +116,7 @@ def generate_html_report(manifest_path: str, output_html_path: str = "data/outpu
     else:
         timestamp_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    tx_hash = "0x59b1b36ec2a48bb40cab223d43de1aaee9fd2fe2388e07b7c4bee626c6d6d115"
+    tx_hash = "0xbedcb20931e557b3d6a34bc542fc43fa66ccdc2ed00142413888520d81c7a4af"
     polygonscan_url = f"https://amoy.polygonscan.com/tx/{tx_hash}"
 
     # --- PART A: Image Discovery & Base64 Data URIs ---
