@@ -69,6 +69,9 @@ def register_evidence(evidence_hash_hex: str, cid: str) -> dict:
 
     polygonscan_url = f"https://amoy.polygonscan.com/tx/{tx_hash_hex}"
 
+    print(f"Transaction Hash: {tx_hash_hex}")
+    print(f"PolygonScan Link: {polygonscan_url}")
+
     return {
         "tx_hash": tx_hash_hex,
         "block_number": receipt["blockNumber"],
