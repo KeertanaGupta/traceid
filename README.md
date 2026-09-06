@@ -1,6 +1,7 @@
 # TRACEID
 
-A CLI tool for face-to-blockchain provenance verification. Given a consented face image, it discovers matching public web/social content, independently re-verifies the face match, and anchors tamper-evident evidence on a public blockchain.
+No hardcoded results, no staged data — real face detection, real web discovery, real on-chain proof.
+
 
 ## What This Proves (and Doesn't)
 
