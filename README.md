@@ -124,4 +124,4 @@ This is a consent-based self-verification tool, demonstrated only on consenting 
 
 ## Demo
 
-[Link to video recording placeholder]
+Link: https://drive.google.com/file/d/1V2K2saIhAT5S3ok3zNyLer7Bi3HDKQ2E/view?usp=sharing
