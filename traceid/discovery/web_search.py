@@ -10,7 +10,7 @@ from traceid.config import SERPAPI_KEY
 def upload_temp_public(image_path: str) -> str:
     """Upload a local image to a free, anonymous public file host.
 
-    Tries 0x0.st first, then catbox.moe, then tmpfiles.org as fallback.
+    Tries freeimage.host first, then fallback hosts, verifying that the URL serves image content bytes.
 
     Args:
         image_path: Path to the local image file.
@@ -25,50 +25,44 @@ def upload_temp_public(image_path: str) -> str:
     if not path_obj.exists() or not path_obj.is_file():
         raise RuntimeError(f"Image file not found: {image_path}")
 
-    # Primary Host: 0x0.st
-    try:
-        with open(path_obj, "rb") as f:
-            resp = requests.post("https://0x0.st", files={"file": f}, timeout=15)
-        if resp.status_code == 200 and resp.text.strip().startswith("http"):
-            url = resp.text.strip()
-            return url
-    except Exception:
-        pass
-
-    # Fallback Host 1: catbox.moe
+    # Host 1: freeimage.host
     try:
         with open(path_obj, "rb") as f:
             resp = requests.post(
-                "https://catbox.moe/user/api.php",
-                data={"reqtype": "fileupload"},
+                "https://freeimage.host/api/1/upload",
+                data={"key": "6d207e02198a847aa98d0a2a901485a5", "action": "upload"},
+                files={"source": f},
+                timeout=15,
+            )
+        if resp.status_code == 200:
+            img_url = resp.json().get("image", {}).get("url")
+            if img_url and img_url.startswith("http"):
+                # Verify raw image byte access
+                chk = requests.get(img_url, timeout=10)
+                if chk.status_code == 200 and chk.headers.get("Content-Type", "").startswith("image/"):
+                    return img_url
+    except Exception:
+        pass
+
+    # Host 2: litterbox (catbox temporary host)
+    try:
+        with open(path_obj, "rb") as f:
+            resp = requests.post(
+                "https://litterbox.catbox.moe/resources/internals/api.php",
+                data={"reqtype": "fileupload", "time": "1h"},
                 files={"fileToUpload": f},
                 timeout=15,
             )
         if resp.status_code == 200 and resp.text.strip().startswith("http"):
-            return resp.text.strip()
-    except Exception:
-        pass
-
-    # Fallback Host 2: tmpfiles.org
-    try:
-        with open(path_obj, "rb") as f:
-            resp = requests.post(
-                "https://tmpfiles.org/api/v1/upload",
-                files={"file": f},
-                timeout=15,
-            )
-        if resp.status_code == 200:
-            data = resp.json()
-            raw_url = data.get("data", {}).get("url")
-            if raw_url and "tmpfiles.org/" in raw_url:
-                # Convert page URL to direct download URL (tmpfiles.org/123/img.jpg -> tmpfiles.org/dl/123/img.jpg)
-                direct_url = raw_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
-                return direct_url
+            url = resp.text.strip()
+            chk = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            if chk.status_code == 200 and chk.headers.get("Content-Type", "").startswith("image/"):
+                return url
     except Exception:
         pass
 
     raise RuntimeError(
-        f"Failed to upload image {image_path} to temporary public hosts (0x0.st, catbox.moe, tmpfiles.org)."
+        f"Failed to upload image {image_path} to temporary public hosts."
     )
 
 
